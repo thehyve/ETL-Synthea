@@ -26,12 +26,18 @@ LoadVocabFromCsv <- function (connectionDetails, vocabDatabaseSchema, vocabFileL
     conn <- DatabaseConnector::connect(connectionDetails)
 
     for (csv in csvList) {
+    	writeLines(paste0("Opening: ",csv))
 
-	    vocabTable <- data.table::fread(file = paste0(vocabFileLoc, "/", csv), stringsAsFactors = FALSE, header = TRUE, sep = "\t", na.strings = NULL)
+    	if (base::identical(csv,"concept_synonym.csv")) {
+    		naString <- NULL
+    	} else {
+    		naString <- ""
+    	}
+
+	    vocabTable <- data.table::fread(file = paste0(vocabFileLoc, "/", csv), stringsAsFactors = FALSE, header = TRUE, sep = "\t", na.strings=naString, quote="")
 
 	    # Format Dates for tables that need it
         if (base::identical(csv,"concept.csv") || base::identical(csv,"concept_relationship.csv") || base::identical(csv,"drug_strength.csv")) {
-
 	        vocabTable$valid_start_date <- as.Date(as.character(vocabTable$valid_start_date),"%Y%m%d")
             vocabTable$valid_end_date   <- as.Date(as.character(vocabTable$valid_end_date),"%Y%m%d")
         }
