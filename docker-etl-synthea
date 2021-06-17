@@ -4,11 +4,11 @@ library(ETLSyntheaBuilder)
 library(httr)
 
 # Get passed environment variables.
-env_var_names <- list("SYNTHEA_DB_URI", "SYNTHEA_CDM_SCHEMA", "SYNTHEA_RAW_SCHEMA", "SYNTHEA_VOCAB_SCHEMA")
+env_var_names <- list("SYNTHEA_DB_URI", "SYNTHEA_CDM_SCHEMA", "SYNTHEA_RAW_SCHEMA", "SYNTHEA_VOCAB_SCHEMA", "SYNTHEA_CDM_VERSION", "SYNTHEA_VERSION")
 env_vars <- Sys.getenv(env_var_names, unset=NA)
 
 # Replace unset environement variables with defaults.
-default_vars <- list("postgresql://localhost/postgres", "cdm_synthea", "raw_synthea", "vocab")
+default_vars <- list("postgresql://localhost/postgres", "cdm_synthea", "raw_synthea", "vocab", "5.3.1", "2.6.1")
 env_vars[is.na(env_vars)] <- default_vars[is.na(env_vars)]
 
 db_conf <- parse_url(env_vars$SYNTHEA_DB_URI)
@@ -21,14 +21,17 @@ cd <- DatabaseConnector::createConnectionDetails(
   port=db_conf$port
 )
 
-ETLSyntheaBuilder::DropEventTables(cd, env_vars$SYNTHEA_CDM_SCHEMA)
+cdmVersion <- env_vars$SYNTHEA_CDM_VERSION
+syntheaVersion <- env_vars$SYNTHEA_VERSION
+
+ETLSyntheaBuilder::DropEventTables(cd, env_vars$SYNTHEA_CDM_SCHEMA, cdmVersion = cdmVersion)
+ETLSyntheaBuilder::DropMapAndRollupTables(cd, env_vars$SYNTHEA_CDM_SCHEMA, cdmVersion = cdmVersion)
 ETLSyntheaBuilder::DropSyntheaTables(cd, env_vars$SYNTHEA_RAW_SCHEMA)
 ETLSyntheaBuilder::DropVocabViews(cd, env_vars$SYNTHEA_CDM_SCHEMA)
 ETLSyntheaBuilder::DropMapAndRollupTables(cd, env_vars$SYNTHEA_CDM_SCHEMA)
-ETLSyntheaBuilder::CreateEventTables(cd, env_vars$SYNTHEA_CDM_SCHEMA)
-ETLSyntheaBuilder::CreateSyntheaTables(cd, env_vars$SYNTHEA_RAW_SCHEMA)
+ETLSyntheaBuilder::CreateCDMTables(cd, env_vars$SYNTHEA_CDM_SCHEMA, cdmVersion = cdmVersion)
+ETLSyntheaBuilder::CreateSyntheaTables(cd, env_vars$SYNTHEA_RAW_SCHEMA, syntheaVersion = syntheaVersion) 
 ETLSyntheaBuilder::LoadSyntheaTables(cd, env_vars$SYNTHEA_RAW_SCHEMA, "/data/synthea/csv")
 ETLSyntheaBuilder::CreateVocabViews(cd, env_vars$SYNTHEA_VOCAB_SCHEMA, env_vars$SYNTHEA_CDM_SCHEMA)
 ETLSyntheaBuilder::CreateVocabMapTables(cd, env_vars$SYNTHEA_CDM_SCHEMA)
-ETLSyntheaBuilder::CreateVisitRollupTables(cd, env_vars$SYNTHEA_CDM_SCHEMA, env_vars$SYNTHEA_RAW_SCHEMA)
-ETLSyntheaBuilder::LoadEventTables(cd, env_vars$SYNTHEA_CDM_SCHEMA, env_vars$SYNTHEA_RAW_SCHEMA)
+ETLSyntheaBuilder::CreateCDMIndexAndConstraintScripts(connectionDetails = cd, cdmSchema = env_vars$SYNTHEA_CDM_SCHEMA, cdmVersion = cdmVersion)

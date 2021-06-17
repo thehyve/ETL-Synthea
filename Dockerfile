@@ -1,9 +1,4 @@
-FROM thehyve/ohdsi-r-base:3.6.1
-
-RUN install.r \
-      data.table \
-      bit64 \
-  && rm -rf /tmp/downloaded_packages/ /tmp/*.rds
+FROM thehyve/ohdsi-r-base:3.6.3
 
 WORKDIR /opt/app
 COPY . /opt/app

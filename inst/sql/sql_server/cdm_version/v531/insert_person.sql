@@ -6,7 +6,6 @@ year_of_birth,
 month_of_birth,
 day_of_birth,
 birth_datetime,
-death_datetime,
 race_concept_id,
 ethnicity_concept_id,
 location_id,
@@ -30,7 +29,6 @@ select
 	MONTH(p.birthdate),
 	DAY(p.birthdate),
 	p.birthdate,
-    p.deathdate,
 	case upper(p.race)
 		when 'WHITE' then 8527
 		when 'BLACK' then 8516

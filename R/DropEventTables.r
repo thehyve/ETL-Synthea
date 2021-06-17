@@ -18,15 +18,20 @@
 
 DropEventTables <- function (connectionDetails, cdmSchema, cdmVersion)
 {
-    pathToSql <- base::system.file("sql/sql_server", package = "ETLSyntheaBuilder")
 
-    sqlFile <- base::paste0(pathToSql, "/", "drop_event_tables.sql")
+	if (cdmVersion == "5.3.1")
+		sqlFilePath <- "cdm_version/v531"
+	else if (cdmVersion == "6.0.0")
+		sqlFilePath <- "cdm_version/v600"
+	else
+		stop("Unsupported CDM specified. Supported CDM versions are \"5.3.1\" and \"6.0.0\"")
 
-    sqlQuery <- base::readChar(sqlFile, base::file.info(sqlFile)$size)
-
-    renderedSql <- SqlRender::render(sqlQuery, cdm_schema = cdmDatabaseSchema)
-
-    translatedSql <- SqlRender::translate(renderedSql, targetDialect = connectionDetails$dbms)
+    translatedSql <- SqlRender::loadRenderTranslateSql(
+		sqlFilename = paste0(sqlFilePath,"/","drop_event_tables.sql"),
+		packageName = "ETLSyntheaBuilder",
+		dbms        = connectionDetails$dbms,
+		cdm_schema  = cdmSchema
+	)
 
     writeLines("Running drop_event_tables.sql")
 	
